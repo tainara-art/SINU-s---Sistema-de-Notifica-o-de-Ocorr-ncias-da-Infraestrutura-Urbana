@@ -1,0 +1,2 @@
+# SINU-s---Sistema-de-Notifica-o-de-Ocorr-ncias-da-Infraestrutura-Urbana
+O sistema consciente em uma plataforma destinada ao gerenciamento e destinação de denúncias sob a infraestrutura urbana para prefeituras. Este projeto é uma atualização de um projeto existente aonde terá o mesmo objetivo, porém terá upgrades  agregados. Este projeto foi desenvolvido por alunos da FHO - Fundação Hérminio Ometto.
