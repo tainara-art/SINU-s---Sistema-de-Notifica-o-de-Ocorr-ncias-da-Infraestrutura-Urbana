@@ -1,0 +1,105 @@
+{% extends 'frontend/base.html' %}
+{% block title %}Painel Admin | SINU's{% endblock %}
+
+{% block content %}
+<section class="container dashboard">
+
+  <!-- Cabeçalho -->
+  <div class="section-title row-between" style="margin-bottom: 28px;">
+    <div>
+      <span class="eyebrow">Admin</span>
+      <h1>Olá, {{ request.user.name|default:request.user.email }} </h1>
+      <p style="margin: 0;">Visão global de todas as ocorrências do sistema.</p>
+    </div>
+    <a class="btn btn-soft" href="/admin/" style="font-size: .88rem;">⚙️ Django Admin</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom: 28px;">
+    <div class="stat-card"><strong>{{ total }}</strong><span>Total de ocorrências</span></div>
+    <div class="stat-card" style="border-left: 4px solid #f4a94e;">
+      <strong style="color: #c47a1a;">{{ abertas }}</strong><span>Abertas</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #7ab3d4;">
+      <strong style="color: #2a6a9a;">{{ em_andamento }}</strong><span>Em andamento</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #6da28f;">
+      <strong style="color: #2f6150;">{{ finalizadas }}</strong><span>Finalizadas</span>
+    </div>
+  </div>
+
+  <!-- Tabela com filtros -->
+  <article class="panel-card">
+    <div class="row-between" style="margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <h2 style="margin: 0;">📋 Todas as ocorrências</h2>
+      <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <select name="prefeitura" class="form-control" style="width: auto; padding: 8px 12px; font-size: .88rem;">
+          <option value="">Todas as prefeituras</option>
+          {% for pref in prefeituras %}
+            <option value="{{ pref.id }}" {% if pref_filtro == pref.id|stringformat:"s" %}selected{% endif %}>
+              {{ pref.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <select name="status" class="form-control" style="width: auto; padding: 8px 12px; font-size: .88rem;">
+          <option value="">Todos os status</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filtro == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-soft" type="submit" style="padding: 8px 16px; font-size: .88rem;">Filtrar</button>
+        {% if status_filtro or pref_filtro %}
+          <a class="btn btn-outline" href="{% url 'frontend:dashboard' %}"
+             style="padding: 8px 14px; font-size: .85rem;">✕ Limpar</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Prefeitura</th>
+            <th>Secretaria</th>
+            <th>Status</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for oc in ocorrencias %}
+          <tr>
+            <td style="color: var(--muted); font-size: .82rem;">{{ oc.id }}</td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {{ oc.descricao }}
+            </td>
+            <td style="font-size: .85rem;">{{ oc.get_categoria_display }}</td>
+            <td style="font-size: .85rem; color: var(--muted);">{{ oc.prefeitura }}</td>
+            <td style="font-size: .85rem; color: var(--muted);">{{ oc.secretaria|default:"—" }}</td>
+            <td>
+              {% if oc.status == 'AB' %}
+                <span class="badge badge-warn">Aberta</span>
+              {% elif oc.status == 'EA' %}
+                <span class="badge badge-blue">Em andamento</span>
+              {% elif oc.status == 'RE' %}
+                <span class="badge badge-ok">Finalizada</span>
+              {% else %}
+                <span class="badge">{{ oc.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--muted); font-size: .82rem;">{{ oc.date_created|date:"d/m/Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" style="text-align: center; padding: 28px; color: var(--muted);">
+            Nenhuma ocorrência encontrada.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+</section>
+{% endblock %}

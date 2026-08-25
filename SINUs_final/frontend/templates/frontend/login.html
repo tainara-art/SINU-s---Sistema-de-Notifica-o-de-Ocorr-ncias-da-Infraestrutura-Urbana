@@ -1,0 +1,4 @@
+{% extends 'frontend/form_page.html' %}
+{% block content %}
+  {% include 'frontend/partials_auth.html' with titulo='Entrar no sistema' subtitulo='Acesso administrativo' botao='Entrar' form=form extra_link='Ainda não tenho conta' extra_url='frontend:cadastro_usuario' %}
+{% endblock %}

@@ -1,0 +1,4 @@
+{% extends 'frontend/form_page.html' %}
+{% block content %}
+  {% include 'frontend/partials_auth.html' with titulo='Cadastro de usuário' subtitulo='Crie sua conta' botao='Cadastrar usuário' form=form extra_link='Já tenho conta' extra_url='frontend:login' %}
+{% endblock %}

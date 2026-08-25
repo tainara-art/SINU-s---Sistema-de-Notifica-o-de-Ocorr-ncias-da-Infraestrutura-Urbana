@@ -1,0 +1,50 @@
+{{ form.non_field_errors }}
+
+{% for hidden in form.hidden_fields %}
+  {{ hidden }}
+  {% if hidden.errors %}<small>{{ hidden.errors|striptags }}</small>{% endif %}
+{% endfor %}
+
+{% for field in form.visible_fields %}
+  <label{% if field.name == 'anonima' %} class="checkbox-field"{% endif %}>
+    {{ field.label }}
+    {{ field }}
+    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+    {% if field.errors %}<small>{{ field.errors|striptags }}</small>{% endif %}
+  </label>
+
+  {% if field.name == 'cep' %}
+    <div class="map-field" data-sinus-map data-default-lat="-22.3572" data-default-lng="-47.3842">
+      <div class="map-field-header">
+        <div>
+          <strong>Localização da ocorrência</strong>
+          <span>Use sua localização atual ou clique no mapa para marcar o problema.</span>
+        </div>
+      </div>
+
+      <div class="map-actions">
+        <button type="button" class="btn btn-soft js-use-location">📍 Usar localização atual</button>
+        <div class="map-search-row">
+          <input type="text" class="js-map-search" placeholder="Buscar endereço no mapa">
+          <button type="button" class="btn btn-soft js-search-address">Buscar</button>
+        </div>
+      </div>
+
+      <div class="map-box">
+        <div class="map-location-modal js-location-modal">
+          <div class="map-location-card">
+            <strong>Usar localização atual</strong>
+            <p>Permita o acesso à localização para marcar automaticamente onde você está.</p>
+            <div class="map-location-buttons">
+              <button type="button" class="btn btn-primary js-modal-location">Usar localização atual</button>
+              <button type="button" class="btn btn-soft js-modal-manual">Selecionar no mapa</button>
+            </div>
+          </div>
+        </div>
+        <div class="sinus-map js-sinus-map"></div>
+      </div>
+
+      <small class="map-status js-location-status">Nenhum local selecionado. Clique no mapa ou use sua localização atual.</small>
+    </div>
+  {% endif %}
+{% endfor %}

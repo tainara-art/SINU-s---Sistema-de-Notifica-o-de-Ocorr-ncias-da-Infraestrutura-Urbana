@@ -1,0 +1,42 @@
+{% extends 'frontend/base.html' %}
+{% block title %}SINU's | Plataforma urbana inteligente{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">Infraestrutura urbana + tecnologia</span>
+      <h1>Sua voz ajudando a construir uma cidade melhor.</h1>
+      <p>O SINU's centraliza denúncias urbanas, direciona demandas para secretarias e ajuda a prefeitura a acompanhar indicadores com mais transparência.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'frontend:cadastro_usuario' %}">Começar agora</a>
+        <a class="btn btn-outline" href="{% url 'frontend:ocorrencia_anonima' %}">Enviar anônimamente</a>
+      </div>
+    </div>
+    <div class="hero-card glass-card">
+      <div class="map-preview">
+        <span class="pin pin-blue">💧</span>
+        <span class="pin pin-green">🌳</span>
+        <span class="pin pin-pink">💡</span>
+        <span class="pin pin-orange">🚧</span>
+      </div>
+      <div class="mini-panel">
+        <strong>Ocorrência recebida</strong>
+        <p>Buraco na via encaminhado para Pavimentação.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-title">
+    <span class="eyebrow">Como funciona</span>
+    <h2>Fluxo simples para cidadão e administração pública</h2>
+  </div>
+  <div class="cards-3">
+    <article class="feature-card"><span>01</span><h3>Registro</h3><p>O cidadão realiza o registro da ocorrência informando descrição, localização, categoria e podendo anexar fotos para detalhar o problema identificado.</p></article>
+    <article class="feature-card"><span>02</span><h3>Encaminhamento</h3><p>A solicitação é analisada e direcionada automaticamente para a secretaria ou setor responsável pela categoria informada.</p></article>
+    <article class="feature-card"><span>03</span><h3>Monitoramento</h3><p>Os administradores acompanham o andamento das ocorrências em tempo real, verificando status, prioridades, prazos e indicadores pelo painel de controle.</p></article>
+    <article class="feature-card"><span>04</span><h3>Execução</h3><p>A equipe responsável realiza as ações necessárias para solucionar a ocorrência, promovendo melhorias e garantindo a resolução da demanda registrada.</p></article>
+  </div>
+</section>
+{% endblock %}

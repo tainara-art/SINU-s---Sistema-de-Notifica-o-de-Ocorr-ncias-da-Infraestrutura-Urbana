@@ -1,0 +1,18 @@
+{% extends 'frontend/base.html' %}
+{% block title %}{{ titulo }} | SINU's{% endblock %}
+{% block content %}
+<section class="container auth-section">
+  <div class="form-card">
+    <span class="eyebrow">{{ subtitulo }}</span>
+    <h1>{{ titulo }}</h1>
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <label>{{ field.label }}{{ field }}{% if field.errors %}<small>{{ field.errors|striptags }}</small>{% endif %}</label>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit">{{ botao }}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

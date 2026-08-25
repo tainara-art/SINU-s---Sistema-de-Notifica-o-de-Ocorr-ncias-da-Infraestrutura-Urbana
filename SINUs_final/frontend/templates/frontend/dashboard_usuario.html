@@ -1,0 +1,186 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% block title %}Meu Painel | SINU's
+<script>
+  document.querySelectorAll('.js-single-submit').forEach((form) => {
+    form.addEventListener('submit', () => {
+      const button = form.querySelector('button[type="submit"]');
+      if (button) {
+        button.disabled = true;
+        button.dataset.originalText = button.textContent;
+        button.textContent = 'Enviando...';
+      }
+    });
+  });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block content %}
+<section class="container dashboard">
+
+  <!-- Cabeçalho -->
+  <div class="section-title row-between" style="margin-bottom: 28px;">
+    <div>
+      <span class="eyebrow">Cidadão</span>
+      <h1>Olá, {{ request.user.name|default:request.user.email }}</h1>
+      <p style="margin: 0;">Acompanhe suas ocorrências registradas.</p>
+    </div>
+    <a class="btn btn-primary" href="#registrar" id="btn-registrar">
+      + Registrar ocorrência
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom: 28px;">
+    <div class="stat-card"><strong>{{ total }}</strong><span>Minhas ocorrências</span></div>
+    <div class="stat-card" style="border-left: 4px solid #f4a94e;">
+      <strong style="color: #c47a1a;">{{ abertas }}</strong><span>Abertas</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #7ab3d4;">
+      <strong style="color: #2a6a9a;">{{ em_andamento }}</strong><span>Em andamento</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #6da28f;">
+      <strong style="color: #2f6150;">{{ finalizadas }}</strong><span>Finalizadas</span>
+    </div>
+  </div>
+
+  <article class="panel-card dashboard-map-card" style="margin-bottom: 24px;">
+    <div class="row-between" style="margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 style="margin: 0;">🗺️ Mapa das minhas ocorrências</h2>
+        <p style="margin: 4px 0 0; color: var(--muted); font-size: .9rem;">Pins das ocorrências registradas por você.</p>
+      </div>
+      <span class="map-count">{{ ocorrencias_mapa|length }} ocorrências no mapa</span>
+    </div>
+    <div class="dashboard-map" data-dashboard-map data-points-script="usuario-ocorrencias-map-data" data-default-lat="-22.3572" data-default-lng="-47.3842"></div>
+  </article>
+
+  {{ ocorrencias_mapa|json_script:"usuario-ocorrencias-map-data" }}
+
+  <!-- Lista de ocorrências -->
+  <article class="panel-card" style="margin-bottom: 24px;">
+    <h2>📋 Minhas ocorrências</h2>
+
+    {% if minhas_ocorrencias %}
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Status</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for oc in minhas_ocorrencias %}
+            <tr>
+              <td style="max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ oc.descricao }}
+              </td>
+              <td>{{ oc.get_categoria_display }}</td>
+              <td>
+                {% if oc.status == 'AB' %}
+                  <span class="badge badge-warn">Aberta</span>
+                {% elif oc.status == 'EA' %}
+                  <span class="badge badge-blue">Em andamento</span>
+                {% elif oc.status == 'RE' %}
+                  <span class="badge badge-ok">Finalizada</span>
+                {% else %}
+                  <span class="badge">{{ oc.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td style="color: var(--muted); font-size: .85rem;">
+                {{ oc.date_created|date:"d/m/Y" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span style="font-size: 2.5rem;">🗺️</span>
+        <p>Você ainda não registrou nenhuma ocorrência.</p>
+        <p style="font-size: .9rem;">Clique em "Registrar ocorrência" para começar.</p>
+      </div>
+    {% endif %}
+  </article>
+
+  <!-- Formulário de nova ocorrência (colapsável) -->
+  <article class="panel-card" id="registrar" style="display: none;">
+    <div class="row-between" style="margin-bottom: 16px;">
+      <h2 style="margin: 0;">📍 Registrar ocorrência</h2>
+      <button class="btn btn-soft" id="btn-fechar"
+              style="padding: 8px 16px; font-size: .85rem; border-radius: 12px;">
+        ✕ Fechar
+      </button>
+    </div>
+    <p style="margin-bottom: 4px;">Informe o problema, a categoria e a localização.</p>
+
+    <form method="post" enctype="multipart/form-data" class="stack-form js-single-submit" style="margin-top: 16px;">
+      {% csrf_token %}
+      {% include 'frontend/partials_ocorrencia_form_fields.html' %}
+      <button class="btn btn-primary" type="submit" style="margin-top: 8px;">
+        Enviar ocorrência
+      </button>
+    </form>
+  </article>
+
+</section>
+
+<script>
+  const btnRegistrar = document.getElementById('btn-registrar');
+  const btnFechar    = document.getElementById('btn-fechar');
+  const formPanel    = document.getElementById('registrar');
+
+  btnRegistrar.addEventListener('click', function(e) {
+    e.preventDefault();
+    formPanel.style.display = 'block';
+    formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      if (window.SINUS_MAPS && typeof window.SINUS_MAPS.invalidateAll === 'function') {
+        window.SINUS_MAPS.invalidateAll();
+      }
+    }, 250);
+  });
+
+  btnFechar.addEventListener('click', function() {
+    formPanel.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Se vier com erro de validação, mantém o form aberto
+  {% if form.errors %}
+    formPanel.style.display = 'block';
+    setTimeout(() => {
+      if (window.SINUS_MAPS && typeof window.SINUS_MAPS.invalidateAll === 'function') {
+        window.SINUS_MAPS.invalidateAll();
+      }
+    }, 250);
+  {% endif %}
+</script>
+
+<script>
+  document.querySelectorAll('.js-single-submit').forEach((form) => {
+    form.addEventListener('submit', () => {
+      const button = form.querySelector('button[type="submit"]');
+      if (button) {
+        button.disabled = true;
+        button.dataset.originalText = button.textContent;
+        button.textContent = 'Enviando...';
+      }
+    });
+  });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'frontend/js/painel_mapa_ocorrencias.js' %}"></script>
+<script src="{% static 'frontend/js/ocorrencia_mapa.js' %}"></script>
+{% endblock %}

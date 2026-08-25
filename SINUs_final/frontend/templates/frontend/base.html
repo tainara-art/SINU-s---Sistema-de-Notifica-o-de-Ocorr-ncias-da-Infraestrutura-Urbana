@@ -1,0 +1,73 @@
+{% load static %}
+{% load frontend_tags %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SINU'S{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'frontend/css/styles.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav container">
+      <a class="brand" href="{% url 'frontend:landing' %}">
+        <span class="brand-mark">S</span>
+        <span>SINU'S</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Abrir menu">☰</button>
+      <div class="nav-links">
+        <a href="{% url 'frontend:landing' %}">Início</a>
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'frontend:dashboard' %}">Painel</a>
+          {% if request.user.is_staff %}
+            {# Menu do admin #}
+            <a href="{% url 'frontend:prefeituras' %}">Prefeituras</a>
+            <a href="{% url 'frontend:secretarias' %}">Secretarias</a>
+            
+          {% elif request.user.is_authenticated and request.user|has_attr:"prefeitura" %}
+            {# Menu da prefeitura #}
+            <a href="{% url 'frontend:secretarias' %}">Secretarias</a>
+            
+          {% endif %}
+          {# Secretaria e cidadão: sem abas administrativas #}
+          <a class="btn btn-soft" href="{% url 'frontend:logout' %}">Sair</a>
+        {% else %}
+          <a href="{% url 'frontend:login' %}">Login</a>
+          <a class="btn btn-primary" href="{% url 'frontend:cadastro_usuario' %}">Cadastrar</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  {% if messages %}
+    <div class="container messages">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <p><strong>SINU's</strong> — Sistema de Notificação de Ocorrência da Infraestrutura Urbana.</p>
+      <p>Desenvolvido para conectar cidadãos, prefeituras e secretarias.</p>
+    </div>
+
+    <div class="container footer-grid" style="justify-content: center; text-align: center;">
+  <p><em>Desenvolvido por - Ana Lívia Ferreira · Emanuelle Moreira · João Vitor Oliveira · Luan Giovani · Tainara Ferreira · Vinicius de Assis</em></p>
+    </div>
+  </footer>
+  <script src="{% static 'frontend/js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
