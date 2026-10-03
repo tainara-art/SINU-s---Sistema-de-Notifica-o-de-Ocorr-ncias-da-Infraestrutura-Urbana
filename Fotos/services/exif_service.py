@@ -11,7 +11,7 @@ class ExifService:
          -coordenada_decimal
           if PC.upper() in ["S", "W"]
             else coordenada_decimal)
-        return round(coordenada_decimal, 6)
+        return round(float(coordenada_decimal), 6)
 
     @staticmethod
     def extrair_exif(arquivo):

@@ -61,6 +61,9 @@ api_urls = [
 
     # DRF browsable API (apenas em DEBUG)
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+    #asfotolá
+    path("fotos/", include("Fotos.urls")),
 ]
 
 urlpatterns = (

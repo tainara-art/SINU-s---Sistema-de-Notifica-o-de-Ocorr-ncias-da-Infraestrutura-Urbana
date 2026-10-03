@@ -1,7 +1,10 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
+from Fotos.services.exif_service import ExifService
 from Ocorrencias.forms import FotoUploadForm
 
 
@@ -15,3 +18,21 @@ def upload_foto(request):
         return redirect(request.path)
 
     return render(request, 'ocorrencias/upload.html', {'form': form})
+ 
+class LocalizacaoFotoView(APIView):
+    def post(self, request):
+        arquivo = request.FILES.get("foto")
+        
+        if not arquivo:
+            return Response(
+                {"erro": "Imagem não enviada"},
+                status=400
+            )
+        localizacao = ExifService.obter_localizacao(arquivo)
+
+        if not localizacao:
+            return Response (
+                {"erro": "Imagem sem localização GPS"},
+                status=400
+            )
+        return Response(localizacao)
