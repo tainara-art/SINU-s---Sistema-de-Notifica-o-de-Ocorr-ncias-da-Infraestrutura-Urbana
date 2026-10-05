@@ -101,7 +101,7 @@
     const defaultLng = getNumber(wrapper.dataset.defaultLng, -47.3842);
     const map = L.map(mapElement, { scrollWheelZoom: true }).setView([defaultLat, defaultLng], 14);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
       maxZoom: 19
     }).addTo(map);

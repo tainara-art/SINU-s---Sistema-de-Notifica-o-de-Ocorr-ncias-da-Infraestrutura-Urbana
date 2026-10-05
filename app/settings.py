@@ -151,3 +151,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL           = 'frontend:login'
 LOGIN_REDIRECT_URL  = 'frontend:dashboard'
 LOGOUT_REDIRECT_URL = 'frontend:landing'
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
