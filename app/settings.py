@@ -152,3 +152,10 @@ LOGIN_URL           = 'frontend:login'
 LOGIN_REDIRECT_URL  = 'frontend:dashboard'
 LOGOUT_REDIRECT_URL = 'frontend:landing'
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+#Isso é para a API com o gemini funcionar
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash"
+)
