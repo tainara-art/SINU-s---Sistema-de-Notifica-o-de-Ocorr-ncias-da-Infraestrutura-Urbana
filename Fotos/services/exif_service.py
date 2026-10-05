@@ -13,6 +13,7 @@ class ExifService:
             else coordenada_decimal)
         return round(float(coordenada_decimal), 6)
 
+
     @staticmethod
     def extrair_exif(arquivo):
       with Image.open(arquivo) as img:

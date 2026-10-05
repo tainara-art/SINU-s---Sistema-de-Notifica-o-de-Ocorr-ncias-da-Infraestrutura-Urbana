@@ -20,6 +20,13 @@ def upload_foto(request):
     return render(request, 'ocorrencias/upload.html', {'form': form})
  
 class LocalizacaoFotoView(APIView):
+    """
+    Recebe uma imagem enviada pelo frontend e tenta extrair
+    sua localização GPS através dos metadados EXIF.
+
+    A leitura e conversão dos metadados ficam sob responsabilidade
+    do ExifService; a view apenas trata HTTP e devolve o resultado.
+    """
     def post(self, request):
         arquivo = request.FILES.get("foto")
         

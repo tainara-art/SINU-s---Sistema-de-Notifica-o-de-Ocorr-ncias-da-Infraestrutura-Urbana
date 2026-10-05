@@ -74,6 +74,7 @@
     const mapElement      = wrapper.querySelector('.js-sinus-map');
     const latInput        = form ? form.querySelector('input[name="latitude"]')  : null;
     const lngInput        = form ? form.querySelector('input[name="longitude"]') : null;
+    const fotosInput      = form ? form.querySelector('input[name="fotos"]') : null;
     const cepInput        = form ? form.querySelector('.js-map-cep')             : null;
     const statusElement   = wrapper.querySelector('.js-location-status');
     const modal           = wrapper.querySelector('.js-location-modal');
@@ -81,6 +82,18 @@
     const manualButton    = wrapper.querySelector('.js-modal-manual');
     const searchInput     = wrapper.querySelector('.js-map-search');
     const searchButton    = wrapper.querySelector('.js-search-address');
+
+    // Ao selecionar fotos, tenta utilizar os metadados GPS da primeira imagem
+   // para preencher automaticamente a localização da ocorrência.
+    if (fotosInput) {
+      fotosInput.addEventListener('change', function () {
+        const arquivo = fotosInput.files[0];
+
+        if (!arquivo) return;
+
+        obterLocalizacaoDaFoto(arquivo);
+      });
+    }
 
     if (!mapElement || !latInput || !lngInput || !window.L) return;
 
@@ -133,6 +146,69 @@
 
       if (zoom) {
         map.setView([cleanLat, cleanLng], zoom);
+      }
+    }
+
+ // Tenta obter automaticamente a localização registrada nos metadados EXIF
+// da foto selecionada.
+//
+// A imagem é enviada para a API de localização, que utiliza o ExifService
+// no backend e retorna latitude e longitude quando houver GPS disponível.
+    async function obterLocalizacaoDaFoto(arquivo){
+      const formData = new FormData();
+        // O nome "foto" deve ser o mesmo esperado pela LocalizacaoFotoView.
+
+      form.Data.append('foto', arquivo);
+
+      setStatus(
+        statusElement,
+        'Buscando localização nos dados da foto...',
+        'info'
+      );
+
+      try {
+        const responser = await fetch ('/api/fotos/localizacao/',{
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+          // A ausência de GPS não impede o cadastro.
+          // O usuário ainda poderá informar a localização manualmente pelo mapa.
+        if (!response.ok){
+          setStatus(
+            statusElement,
+            'A foto não possui localização GPS. Você pode selecionar o local no mapa.',
+            'warn'
+          );
+          return;
+        }
+        // Proteção contra uma resposta válida, mas sem coordenadas utilizáveis.
+        if (data.latitude == null || data.longitude == null){
+          return;
+        }
+        // Reutiliza o fluxo existente do mapa para:
+        // - posicionar o marcador;
+        // - preencher latitude e longitude;
+        // - buscar o CEP;
+        // - centralizar o mapa.
+        setMarker(data.latitude, data.longitude, 17);
+
+        setStatus(
+          statusElement,
+          'Localização encontrada automaticamente pela foto.',
+          'success'
+        );
+
+        map.invalidateSize();
+      } catch (error){
+        console.error('[SINUS] Erro ao obter localização da foto:', error);
+        // Falha na análise da foto também não bloqueia o preenchimento manual.
+        setStatus(
+          statusElement,
+          'Não foi possível analisar a localização da foto.',
+          'warn'
+        );
       }
     }
 
