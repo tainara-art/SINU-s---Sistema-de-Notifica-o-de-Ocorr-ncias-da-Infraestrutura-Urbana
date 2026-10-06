@@ -11,6 +11,13 @@ from .models import Ocorrencia, HistoricoStatus
 from .serializers import OcorrenciaSerializer
 from Secretaria.models import Secretaria
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from google.genai import errors as genai_errors
+
+from Ocorrencias.services.preenchimento_automatico_facade import (
+    PreenchimentoAutomaticoFacade
+)
 CORES_CATEGORIA = {
     'SB': '#1E90FF', 'PV': '#FF8C00', 'IP': '#FFD700', 'LU': '#32CD32',
     'AS': '#FF69B4', 'AP': '#228B22', 'ST': '#DC143C', 'OS': '#8B4513',
@@ -252,3 +259,39 @@ class RegistrarOcorrenciaMapaView(APIView):
             {'ok': False, 'erros': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
+class PreenchimentoAutomaticoView(APIView):
+    """
+    Analisa uma foto antes do cadastro da ocorrência.
+    """
+
+    def post(self, request):
+        arquivo = request.FILES.get("foto")
+
+        if not arquivo:
+            return Response(
+                {"erro": "Imagem não enviada"},
+                status=400
+            )
+
+        try:
+            facade = PreenchimentoAutomaticoFacade()
+            dados = facade.processar(arquivo)
+
+            return Response(dados)
+
+        except ValueError as erro:
+            return Response(
+                {"erro": str(erro)},
+                status=422
+            )
+
+        except genai_errors.APIError:
+            return Response(
+                {
+                    "erro": (
+                        "O serviço de inteligência artificial "
+                        "está temporariamente indisponível."
+                    )
+                },
+                status=503
+            )

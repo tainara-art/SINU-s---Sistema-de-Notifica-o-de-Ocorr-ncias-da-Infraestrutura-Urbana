@@ -64,6 +64,8 @@ api_urls = [
 
     #asfotolá
     path("fotos/", include("Fotos.urls")),
+    #Ocorrência com IA
+    path("ocorrencias/", include("Ocorrencias.urls")),
 ]
 
 urlpatterns = (
