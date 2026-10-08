@@ -28,6 +28,8 @@ from .forms import (
     SecretariaForm,
     UsuarioCadastroForm,
 )
+from django.core.exceptions import ValidationError
+from Ocorrencias.services.status_service import StatusOcorrenciaService
 
 
 # ---------------------------------------------------------------------------
@@ -367,14 +369,32 @@ def _dashboard_secretaria(request):
 
     STATUS_VALIDOS = dict(StatusOcorrencia.choices)
     if request.method == 'POST' and 'ocorrencia_id' in request.POST:
-        oc_id      = request.POST.get('ocorrencia_id')
+        oc_id = request.POST.get('ocorrencia_id')
         novo_status = request.POST.get('novo_status')
         try:
             oc = Ocorrencia.objects.get(pk=oc_id, secretaria=secretaria)
             if novo_status in STATUS_VALIDOS:
-                oc.status = novo_status
-                oc.save()
-                messages.success(request, 'Status atualizado.')
+                try:
+                    _, alterado = StatusOcorrenciaService.atualizar(
+                        ocorrencia_id=oc.id,
+                        novo_status=novo_status,
+                        responsavel=request.user,
+                    )
+
+                    if alterado:
+                        messages.success(
+                            request,
+                            "Status atualizado e registrado no histórico."
+                        )
+                    else:
+                        messages.info(
+                            request,
+                            "A ocorrência já possui esse status."
+                        )
+                except ValidationError as erro:
+                    messages.error(request, "; ".join(erro.messages))
+            else:
+                messages.error(request, "Status inválido.")
         except Ocorrencia.DoesNotExist:
             messages.error(request, 'Ocorrência não encontrada.')
         return redirect('frontend:dashboard')
