@@ -418,19 +418,41 @@
 
 
       try {
-        const response =
-          await fetch(
-            '/api/ocorrencias/preenchimento-automatico/',
-            {
-              method: 'POST',
-              body: formData
-            }
-          );
+        // Envia a imagem para a API de IA + EXIF.
+        // O token CSRF permite utilizar a sessão autenticada.
+        // Obtém o token CSRF do formulário Django.
+        // Caso não exista no formulário, utiliza o cookie csrftoken.
+        const csrfTokenInput = form?.querySelector(
+          'input[name="csrfmiddlewaretoken"]'
+        );
 
+        const csrfTokenCookie = document.cookie
+          .split('; ')
+          .find(cookie => cookie.startsWith('csrftoken='))
+          ?.split('=')[1];
+
+        const csrfToken = csrfTokenInput?.value ||
+          (csrfTokenCookie ? decodeURIComponent(csrfTokenCookie) : null);
+
+        // Envia a foto para a API com o token de segurança do Django.
+        const response = await fetch(
+          '/api/ocorrencias/preenchimento-automatico/',
+          {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRFToken': csrfToken || ''
+            },
+            body: formData
+          }
+        );
 
         const data =
           await response.json();
-
+        // Exibe o status HTTP e a resposta do backend
+        // para facilitar a identificação de erros.
+        console.log('[SINUS] Status da IA:', response.status);
+        console.log('[SINUS] Resposta da IA:', data);
 
         /**
          * Uma falha na análise automática
@@ -441,7 +463,8 @@
           setStatus(
             statusElement,
             data.erro ||
-              'Não foi possível analisar a foto.',
+            data.detail ||
+            'Não foi possível analisar a foto.',
             'warn'
           );
 
