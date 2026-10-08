@@ -4,7 +4,8 @@
 # Adaptado para usar CategoriaOcorrencia (choices) em vez do model Categoria.
 
 from datetime import timedelta
-
+from django.db import transaction
+from Ocorrencias.services.cadastro_service import CadastroOcorrenciaService
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -173,9 +174,15 @@ def ocorrencia_anonima_view(request):
         if _ocorrencia_duplicada(oc):
             messages.warning(request, 'Essa ocorrência já foi enviada. A duplicidade foi evitada.')
         else:
-            oc.save()
-            form.save_fotos(oc)
-            messages.success(request, 'Ocorrência enviada com sucesso.')
+            with transaction.atomic():
+                oc.save()
+                form.save_fotos(oc)
+                CadastroOcorrenciaService.registrar(oc)
+
+        messages.success(
+            request,
+            f'Ocorrência enviada! Protocolo: {oc.protocolo}'
+        )
 
         return redirect(f"{reverse('frontend:ocorrencia_anonima')}?enviado=1")
 
@@ -252,9 +259,15 @@ def _dashboard_usuario(request):
         if _ocorrencia_duplicada(oc):
             messages.warning(request, 'Essa ocorrência já foi registrada. A duplicidade foi evitada.')
         else:
+           with transaction.atomic():
             oc.save()
             form.save_fotos(oc)
-            messages.success(request, 'Ocorrência registrada com sucesso!')
+            CadastroOcorrenciaService.registrar(oc)
+
+        messages.success(
+            request,
+            f'Ocorrência registrada! Protocolo: {oc.protocolo}'
+    )
 
         return redirect('frontend:dashboard')
 

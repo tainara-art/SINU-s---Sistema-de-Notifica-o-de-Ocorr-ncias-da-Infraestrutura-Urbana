@@ -14,6 +14,13 @@ class Secretaria(models.Model):
         null=True, blank=True,
         related_name='secretaria_vinculada'
     )
+    # Sigla utilizada na identificação dos protocolos.
+    # Exemplo: OBR = Secretaria de Obras.
+    sigla = models.CharField(
+    max_length=3,
+    null=True,
+    blank=True
+    )
     categoria  = models.CharField(
         max_length=2,
         choices=CategoriaSecretaria.choices,

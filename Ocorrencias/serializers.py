@@ -3,7 +3,8 @@ from rest_framework import serializers
 from .models import Ocorrencia, HistoricoStatus
 from Fotos.models import Fotos
 from Fotos.validators import MAX_FOTOS_POR_OCORRENCIA, validate_image_file
-
+from django.db import transaction
+from Ocorrencias.services.cadastro_service import CadastroOcorrenciaService
 
 class FotosSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,9 +60,18 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         fotos_data = validated_data.pop('fotos_upload', [])
-        ocorrencia = Ocorrencia.objects.create(**validated_data)
-        for imagem in fotos_data:
-            Fotos.objects.create(ocorrencia=ocorrencia, arquivo=imagem)
+
+        with transaction.atomic():
+            ocorrencia = Ocorrencia.objects.create(**validated_data)
+
+            for imagem in fotos_data:
+                Fotos.objects.create(
+                    ocorrencia=ocorrencia,
+                    arquivo=imagem
+                )
+
+            CadastroOcorrenciaService.registrar(ocorrencia)
+
         return ocorrencia
 
     def update(self, instance, validated_data):

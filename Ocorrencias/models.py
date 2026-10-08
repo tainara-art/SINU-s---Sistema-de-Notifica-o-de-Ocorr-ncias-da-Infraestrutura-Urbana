@@ -57,6 +57,15 @@ class Ocorrencia(models.Model):
                      on_delete=models.SET_NULL,
                      null=True, blank=True,
                      related_name='ocorrencias')
+    # Identificador público e permanente da ocorrência.
+    # Exemplo: 202610-OBR-001.
+    protocolo = models.CharField(
+    max_length=30,
+    unique=True,
+    null=True,
+    blank=True,
+    editable=False
+    )
 
     date_created = models.DateTimeField(auto_now_add=True)
     date_update  = models.DateTimeField(auto_now=True)
@@ -66,36 +75,178 @@ class Ocorrencia(models.Model):
 
 
 class HistoricoStatus(models.Model):
-    ocorrencia      = models.ForeignKey(
-                          Ocorrencia,
-                          on_delete=models.CASCADE,
-                          related_name='historico')
+    """
+    Registra as mudanças de status da ocorrência.
+
+    Os registros são históricos e não podem ser
+    alterados ou excluídos diretamente.
+    """
+
+    ocorrencia = models.ForeignKey(
+        Ocorrencia,
+        on_delete=models.CASCADE,
+        related_name='historico'
+    )
+
     status_anterior = models.CharField(
-                          max_length=2,
-                          choices=StatusOcorrencia.choices,
-                          blank=True)
-    status_novo     = models.CharField(
-                          max_length=2,
-                          choices=StatusOcorrencia.choices)
-    observacao      = models.TextField(blank=True)
-    responsavel     = models.ForeignKey(
-                          'Usuario.Usuario',
-                          on_delete=models.SET_NULL,
-                          null=True,
-                          related_name='historicos')
-    alterado_em     = models.DateTimeField(auto_now_add=True)
+        max_length=2,
+        choices=StatusOcorrencia.choices,
+        blank=True
+    )
+
+    status_novo = models.CharField(
+        max_length=2,
+        choices=StatusOcorrencia.choices
+    )
+
+    observacao = models.TextField(blank=True)
+
+    responsavel = models.ForeignKey(
+        'Usuario.Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='historicos'
+    )
+
+    alterado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-alterado_em']
 
-    # RN05 — histórico imutável
+    # RN05 — histórico imutável.
     def save(self, *args, **kwargs):
         if self.pk:
-            raise ValidationError('Histórico de status é imutável.')
+            raise ValidationError(
+                'Histórico de status é imutável.'
+            )
+
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        raise ValidationError('Histórico de status não pode ser excluído.')
+        raise ValidationError(
+            'Histórico de status não pode ser excluído.'
+        )
 
     def __str__(self):
-        return f'Ocorrencia {self.ocorrencia_id}: {self.status_anterior} -> {self.status_novo}'
+        return (
+            f'Ocorrencia {self.ocorrencia_id}: '
+            f'{self.status_anterior} -> {self.status_novo}'
+        )
+
+
+class SequenciaProtocolo(models.Model):
+    """
+    Controla a numeração dos protocolos por
+    competência (ano/mês) e secretaria.
+
+    Exemplo:
+        competencia = 202610
+        sigla = OBR
+        ultimo_numero = 15
+
+    Próximo protocolo: 202610-OBR-016
+    """
+
+    competencia = models.CharField(
+        max_length=6
+    )
+
+    sigla = models.CharField(
+        max_length=3
+    )
+
+    ultimo_numero = models.PositiveIntegerField(
+        default=0
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['competencia', 'sigla'],
+                name='unique_sequencia_protocolo'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.competencia}-{self.sigla}'
+
+
+class RegistroProtocolo(models.Model):
+    """
+    Registra cada ação relevante sobre uma ocorrência.
+
+    Cada registro possui código único, tipo de ação,
+    responsável, observação e data de criação.
+    """
+
+    class TipoAcao(models.TextChoices):
+        CRIACAO = 'CR', 'Criação'
+        ENCAMINHAMENTO = 'EN', 'Encaminhamento'
+        STATUS = 'ST', 'Mudança de status'
+        OBSERVACAO = 'OB', 'Observação'
+
+    class Visibilidade(models.TextChoices):
+        PUBLICA = 'PU', 'Pública'
+        INTERNA = 'IN', 'Interna'
+
+    ocorrencia = models.ForeignKey(
+        Ocorrencia,
+        on_delete=models.PROTECT,
+        related_name='registros_protocolo'
+    )
+
+    codigo = models.CharField(
+        max_length=30,
+        unique=True,
+        editable=False
+    )
+
+    tipo_acao = models.CharField(
+        max_length=2,
+        choices=TipoAcao.choices
+    )
+
+    visibilidade = models.CharField(
+        max_length=2,
+        choices=Visibilidade.choices,
+        default=Visibilidade.PUBLICA
+    )
+
+    responsavel = models.ForeignKey(
+        'Usuario.Usuario',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='registros_protocolo'
+    )
+
+    observacao = models.TextField(
+        blank=True
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        ordering = ['-criado_em', '-id']
+
+    # RN05 — registros de protocolo imutáveis.
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise ValidationError(
+                'Registros de protocolo são imutáveis.'
+            )
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError(
+            'Registros de protocolo não podem ser excluídos.'
+        )
+
+    def __str__(self):
+        return (
+            f'{self.codigo} - '
+            f'{self.get_tipo_acao_display()}'
+        )
